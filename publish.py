@@ -9,6 +9,7 @@ import shutil
 # files that might be checked in that should not be in the zip
 exclude = {
 	"*.py",
+  "*.md",
 	"*.xcf",
   "Makefile",
   ".git*",
@@ -23,6 +24,7 @@ def makedirs(dn):
 def zip_it_up(dest, zip_fn):
 	xx = subprocess.run(['git', 'ls-files'], capture_output = True, text = True)
 	for line in xx.stdout.splitlines():
+		if line.startswith("tests/"): continue
 		name = line.strip()
 		keep = True
 		for pp in exclude:

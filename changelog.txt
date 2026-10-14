@@ -1,41 +1,18 @@
 ---------------------------------------------------------------------------------------------------
-Version: 2.0.2
-Date: 2025-01-04
-  Changes:
-    - Add handler for on_space_platform_built_entity so it works on a space platform
----------------------------------------------------------------------------------------------------
-Version: 2.0.1
-Date: 2024-11-02
-  Features:
-    - Set logistic mode to passive-provider
----------------------------------------------------------------------------------------------------
-Version: 2.0.0
-Date: 2024-10-28
-  Features:
-    - Update for Factorio 2.0
----------------------------------------------------------------------------------------------------
-Version: 1.0.4
-Date: 2024-08-01
-  Features:
-    - Fix crash on GUI close
----------------------------------------------------------------------------------------------------
-Version: 1.0.3
-Date: 2024-07-30
-  Features:
-    - Put the science pack list in a scroll-pane
-    - Properly close the dialog on 'E'
----------------------------------------------------------------------------------------------------
-Version: 1.0.2
-Date: 2024-07-27
-  Features:
-    - Rework to use InfinityChest
----------------------------------------------------------------------------------------------------
-Version: 1.0.1
-Date: 2024-04-14
-  Features:
-    - IR3 compatibility fix
----------------------------------------------------------------------------------------------------
 Version: 1.0.0
-Date: 2024-04-13
+Date: 2026-10-14
   Features:
-    - New release
+    - Independent fork of Magic Science Chest 2.0.2 by Dreaden, titled Magic Science Chest: Improved.
+    - Retain original continuous native refill, one-stack science buffers and five-second unlock checks.
+  Optimizations:
+    - Compare chest filters directly and update only chests of affected forces.
+    - Share production calculations between GUI windows on the same force and skip unchanged captions.
+    - Skip production-statistics reads when the unlock threshold is zero.
+  Bugfixes:
+    - Refresh science caches and GUI rows when science pack keys change.
+    - Rediscover existing chests when replacing the original mod.
+    - Restore native refill for chests saved by earlier batched fork releases.
+  Info:
+    - Compared with original 2.0.2 on a Factorio 2.0.77 endgame save with 2,509 science chests and 5,011 biolabs.
+    - Both completed research-productivity level 49 after 2,306 ticks from 64.68% progress and consumed 2,771,479 combined science packs over 3,000 ticks, including idle time after completion.
+    - Controlled research pause/restart throughput also matched; overall update timings overlapped across runs.

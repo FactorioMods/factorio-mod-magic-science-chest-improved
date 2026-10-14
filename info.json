@@ -1,9 +1,13 @@
 {
-  "name": "magic-science-chest",
-  "version": "2.0.2",
-  "title": "Magic Science Chest",
-  "author": "Dreaden",
+  "name": "magic-science-chest-optimized",
+  "version": "1.0.0",
+  "title": "Magic Science Chest: Improved",
+  "author": "johnmart19 (fork), Dreaden (original)",
   "factorio_version": "2.0",
-  "dependencies": ["base >= 1.1"],
-  "description": "This mod adds a chest that magically refills with science packs."
+  "dependencies": [
+    "base >= 2.0.0",
+    "! magic-science-chest"
+  ],
+  "description": "A fork of Magic Science Chest by Dreaden with filter, GUI and cache fixes, retaining original native refill. Endgame comparison (2,509 chests, 5,011 biolabs): matched original research progression and 2,771,479 combined science packs over 3,000 ticks.",
+  "homepage": "https://github.com/FactorioMods/factorio-mod-magic-science-chest-improved"
 }

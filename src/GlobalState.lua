@@ -92,39 +92,32 @@ function M.force_get_iif(force_index)
   return M.force_data(force_index).iif or {}
 end
 
--- list new keys (science packs) in icf2
-local function diff_ic_filter(icf1, icf2)
-  -- change to simple tables
-  local function icf_flatten(icf_arr)
-    local xx = {}
-    for _, ff in ipairs(icf_arr) do
-      xx[ff.name] = ff.count
-    end
-    return xx
-  end
-  local ic1 = icf_flatten(icf1)
-  local ic2 = icf_flatten(icf2)
-  local diffs = {}
-  for name, _ in pairs(ic2) do
-    if ic1[name] == nil then
-      table.insert(diffs, name)
-    end
-  end
-  return diffs
-end
-
--- Sets the force infinity chest filter, returns a list of
--- science packs that were added.
+-- Filters are dense arrays of four scalar fields; avoid recursive comparison
+-- and allocating two flattened copies on every polling cycle.
 function M.force_set_iif(force_index, ic_filter)
   local data = M.force_data(force_index)
-  local old_icf = data.iif or {}
-  -- table.compare() is a Factorio extension in "__core__/lualib/util"
-  if table.compare(old_icf, ic_filter) then
-    return nil -- no change
+  local old = data.iif or {}
+  local same = #old == #ic_filter
+  if same then
+    for i = 1, #ic_filter do
+      local a, b = old[i], ic_filter[i]
+      if a.name ~= b.name or a.count ~= b.count or a.mode ~= b.mode or a.index ~= b.index then
+        same = false
+        break
+      end
+    end
   end
-  log(("old=%s new=%s"):format(serpent.line(old_icf), serpent.line(ic_filter)))
+  if same then return nil end
+
+  local names = {}
+  for i = 1, #old do names[old[i].name] = true end
+  local added = {}
+  for i = 1, #ic_filter do
+    local name = ic_filter[i].name
+    if not names[name] then added[#added + 1] = name end
+  end
   data.iif = ic_filter
-  return diff_ic_filter(old_icf, ic_filter)
+  return added
 end
 
 ------------------------------------------------------------------------------
@@ -159,9 +152,11 @@ end
 
 function M.get_science_packs(force_scan)
   -- scan for science-packs by looking at lab_inputs
-  local pp = storage.science_packs or {}
+  local pp = storage.science_packs
+  if pp ~= nil and not force_scan then return pp end
+  pp = {}
 
-  if next(pp) == nil or force_scan then
+  if storage.science_packs == nil or force_scan then
     -- scan lab prototypes and update the list of science packs
     for _, ep in pairs(prototypes.get_entity_filtered{{ filter="type", type="lab" }}) do
       for _, item_name in ipairs(ep.lab_inputs) do
@@ -184,7 +179,7 @@ end
 -- @science_packs is from get_science_packs() (key=item, val=stack size)
 function M.get_force_prod_count(force, science_packs)
   local science_pack_totals = {}
-  for surface, _ in pairs(game.surfaces) do
+  for _, surface in pairs(game.surfaces) do
     local ips = force.get_item_production_statistics(surface)
     for item_name, _ in pairs(science_packs) do
       science_pack_totals[item_name] = (science_pack_totals[item_name] or 0) + ips.get_input_count(item_name)

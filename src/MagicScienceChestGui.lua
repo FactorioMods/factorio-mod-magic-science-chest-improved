@@ -5,7 +5,6 @@ Replace the entity GUI with a window listing science packs.
 ]]
 local GlobalState = require "src.GlobalState"
 local constants = require "src.constants"
-local util = require "util" -- "__core__/lualib/util"
 
 local GUI_NAME_WINDOW = "magic-science-chest-entity-gui"
 local GUI_NAME_CLOSE = "magic-science-chest-entity-gui-close"
@@ -175,9 +174,8 @@ function M.get_data(inst)
   -- key=item name, val=progress string
   local items = {}
   local packs = GlobalState.get_science_packs(false)
-  local science_pack_totals = GlobalState.get_force_prod_count(inst.player.force, packs)
-
   local min_prod = settings.global["magic-scient-chest-production"].value
+  local science_pack_totals = min_prod > 0 and GlobalState.get_force_prod_count(inst.player.force, packs) or {}
 
   for item, _ in pairs(packs) do
     local count = science_pack_totals[item] or 0
@@ -212,20 +210,26 @@ function M.rebuild_table(inst, items)
   inst.items = items
 end
 
-function M.gui_refresh(inst)
-  local new_items = M.get_data(inst)
-  if table_size(new_items) == table_size(inst.items) then
-    if util.table.compare(new_items, inst.items) then
+function M.gui_refresh(inst, new_items)
+  new_items = new_items or M.get_data(inst)
+  local old_items = inst.items
+  -- Equal sizes do not guarantee equal keys (e.g. after a force change).
+  for item in pairs(old_items) do
+    if new_items[item] == nil then
+      M.rebuild_table(inst, new_items)
       return
     end
-    for item, caption in pairs(new_items) do
-      inst.elems[item].caption = caption
-    end
-    inst.items = new_items
-    return
   end
-  local tt = inst.elems.item_table
-  M.rebuild_table(inst, new_items)
+  for item in pairs(new_items) do
+    if old_items[item] == nil then
+      M.rebuild_table(inst, new_items)
+      return
+    end
+  end
+  for item, caption in pairs(new_items) do
+    if old_items[item] ~= caption then inst.elems[item].caption = caption end
+  end
+  inst.items = new_items
 end
 
 local function on_gui_opened(event)
@@ -258,11 +262,22 @@ local function on_gui_click(event)
 end
 
 local function on_timer(event)
-  for _, player in pairs(game.players) do
-    local inst = gui_get(player.index)
+  local player_info = storage.player_info
+  if player_info == nil then return end
+  local force_items
+  -- Read existing UI state without creating records for every player.
+  for _, info in pairs(player_info) do
+    local inst = info.ui and info.ui.net_view
     if inst ~= nil then
-      if inst.entity.valid and inst.elems.main_window.valid then
-        M.gui_refresh(inst)
+      if inst.player.valid and inst.entity.valid and inst.elems.main_window.valid then
+        force_items = force_items or {}
+        local force_index = inst.player.force.index
+        local items = force_items[force_index]
+        if items == nil then
+          items = M.get_data(inst)
+          force_items[force_index] = items
+        end
+        M.gui_refresh(inst, items)
       else
         M.destroy(inst)
       end
