@@ -15,14 +15,14 @@ local function filter_science_packs(force, science_packs, min_prod)
   local ic_filter = {}
 
   -- add up the science packs produces on all surfaces
-  local science_pack_totals = GlobalState.get_force_prod_count(force, science_packs)
+  local science_pack_totals = min_prod > 0 and GlobalState.get_force_prod_count(force, science_packs) or {}
 
   -- limit to how much has been produced
   local index = 1
   for item_name, stack_size in pairs(science_packs) do
     local prod_count = science_pack_totals[item_name] or 0
     if prod_count >= min_prod then
-      table.insert(ic_filter, { name=item_name, count=stack_size, mode="exactly", index=index })
+      ic_filter[index] = { name=item_name, count=stack_size, mode="exactly", index=index }
       index = index + 1
     elseif prod_count > 0 then
       GlobalState.log_msg_state(force, item_name, prod_count, min_prod)
@@ -32,15 +32,13 @@ local function filter_science_packs(force, science_packs, min_prod)
 end
 
 -- Calls update_research_chest() on each valid chest. Removes invalid chests.
-local function service_entities(entities)
+local function service_entities(entities, changed_forces)
   for unum, entity in pairs(entities) do
     if entity.valid then
-      local ic_filter = GlobalState.force_get_iif(entity.force_index)
-      if ic_filter ~= nil then
+      if changed_forces == nil or changed_forces[entity.force_index] then
+        local ic_filter = GlobalState.force_get_iif(entity.force_index)
         entity.infinity_container_filters = ic_filter
         entity.get_output_inventory().set_bar(#ic_filter + 1)
-      else
-        log("ic_filter is nil")
       end
     else
       GlobalState.entity_unregister(unum)
@@ -70,7 +68,6 @@ local function entity_removed(event)
     GlobalState.entity_unregister(entity.unit_number)
   end
 end
-
 
 lib.events =
 {
@@ -103,7 +100,7 @@ If it changes, then update all entities.
 ]]
 local function service_forces()
   local min_prod = settings.global["magic-scient-chest-production"].value
-  local something_changed = false
+  local changed_forces = {}
 
   local sp = GlobalState.get_science_packs(false)
 
@@ -112,7 +109,7 @@ local function service_forces()
     local changes = GlobalState.force_set_iif(force.index, ic_filter)
     if changes ~= nil then
       log(("force: %s changes %s"):format(force.name, serpent.line(changes)))
-      something_changed = true
+      changed_forces[force.index] = true
       for _, name in ipairs(changes) do
         local prot = prototypes.item[name]
         if prot ~= nil then
@@ -123,8 +120,8 @@ local function service_forces()
     end
   end
 
-  if something_changed then
-    service_entities(GlobalState.entity_table())
+  if next(changed_forces) then
+    service_entities(GlobalState.entity_table(), changed_forces)
   end
 end
 
