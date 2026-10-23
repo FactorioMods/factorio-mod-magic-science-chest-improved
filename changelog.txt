@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.0.2
+Date: 2026-10-23
+  Bugfixes:
+    - Remove obsolete prototype/style fields reported unused by Factorio 2.1.
+    - Restore legacy disabled refill through disabled_by_script instead of the read-only active property.
+
+---------------------------------------------------------------------------------------------------
 Version: 1.0.1
 Date: 2026-10-23
   Compatibility:

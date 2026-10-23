@@ -24,7 +24,6 @@ entity.inventory_size = 39
 entity.se_allow_in_space = true
 entity.erase_contents_when_mined = true
 entity.gui_mode = 'none'
-entity.enable_inventory_bar = false
 entity.inventory_size = 40 -- should be enough, right?
 entity.inventory_type = "with_filters_and_bar"
 entity.max_health = ref_entity.max_health
@@ -40,7 +39,6 @@ local item = table.deepcopy(data.raw["item"][source_item_name])
 item.name = name
 item.place_result = name
 item.icon = constants.path_graphics("icons/magic-science-chest.png")
-item.size = 64
 item.order = "a[items]-b[" .. name .. "]"
 item.subgroup = ref_item.subgroup
 

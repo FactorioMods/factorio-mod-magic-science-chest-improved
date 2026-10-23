@@ -69,7 +69,6 @@ local function entity_removed(event)
   end
 end
 
-
 lib.events =
 {
   [defines.events.on_built_entity] = entity_added,
@@ -129,7 +128,7 @@ local function rescan()
   for _, surface in pairs(game.surfaces) do
     for _, entity in pairs(surface.find_entities_filtered{name=constants.CHEST_NAME}) do
       -- Earlier fork releases could leave native refill disabled between phases.
-      if restore_refill then entity.active = true end
+      if restore_refill then entity.disabled_by_script = false end
       GlobalState.entity_register(entity)
     end
   end
