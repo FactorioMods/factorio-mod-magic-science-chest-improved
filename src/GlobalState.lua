@@ -184,7 +184,7 @@ end
 -- @science_packs is from get_science_packs() (key=item, val=stack size)
 function M.get_force_prod_count(force, science_packs)
   local science_pack_totals = {}
-  for surface, _ in pairs(game.surfaces) do
+  for _, surface in pairs(game.surfaces) do
     local ips = force.get_item_production_statistics(surface)
     for item_name, _ in pairs(science_packs) do
       science_pack_totals[item_name] = (science_pack_totals[item_name] or 0) + ips.get_input_count(item_name)
