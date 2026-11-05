@@ -88,12 +88,6 @@ lib.events =
   [defines.events.on_post_entity_died] = entity_removed,
 }
 
--- this is called at startup when any mod changes
-lib.on_configuration_changed = function(event)
-  log("Magic Science Chest: rescan")
-  GlobalState.get_science_packs(true)
-end
-
 --[[
 Calculate the InfinityInventoryFilter for each force.
 If it changes, then update all entities.
@@ -122,6 +116,43 @@ local function service_forces()
 
   if next(changed_forces) then
     service_entities(GlobalState.entity_table(), changed_forces)
+  end
+end
+
+-- A fork has its own storage. Rediscover existing chests when replacing
+-- the original mod, and refresh filters without waiting for the next poll.
+local function rescan()
+  local restore_refill = storage.refill_interval ~= nil
+  GlobalState.get_science_packs(true)
+  storage.entities = {}
+  for _, surface in pairs(game.surfaces) do
+    for _, entity in pairs(surface.find_entities_filtered{name=constants.CHEST_NAME}) do
+      -- Earlier fork releases could leave native refill disabled between phases.
+      if restore_refill then entity.disabled_by_script = false end
+      GlobalState.entity_register(entity)
+    end
+  end
+  service_forces()
+  service_entities(GlobalState.entity_table())
+  for _, key in ipairs({"refill_interval", "refill_mode", "refill_buckets",
+    "refill_new", "refill_transition", "refill_sample_total", "refill_sample_tick"}) do
+    storage[key] = nil
+  end
+end
+
+lib.on_init = rescan
+lib.on_configuration_changed = rescan
+
+local function restore_legacy_refill()
+  script.on_event(defines.events.on_tick, nil)
+  if storage.refill_interval ~= nil then rescan() end
+end
+
+lib.on_load = function()
+  -- Also handle saves from a fork release with the same version number.
+  -- on_load may register events, but entity/storage changes wait for the tick.
+  if storage.refill_interval ~= nil then
+    script.on_event(defines.events.on_tick, restore_legacy_refill)
   end
 end
 
